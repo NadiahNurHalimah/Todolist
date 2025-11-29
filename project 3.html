@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List Pro Modern</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #fceabb, #f8b500);
+      --text: #333;
+      --card: #fff;
+      --primary: #ff6f61;
+    }
+    body.dark {
+      --bg: linear-gradient(135deg, #232526, #414345);
+      --text: #eee;
+      --card: #2c2c2c;
+      --primary: #81c784;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      transition: 0.4s;
+    }
+
+    h1 { text-align: center; margin-bottom: 20px; font-size: 2rem; }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .dark-toggle {
+      padding: 8px 14px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.3s;
+    }
+    .dark-toggle:hover { transform: scale(1.05); }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    input, select {
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      outline: none;
+      transition: 0.3s;
+    }
+    input:focus, select:focus { box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-weight: bold;
+    }
+    button:hover { transform: translateY(-2px); opacity: 0.9; }
+
+    .task-list {
+      max-width: 800px;
+      margin: auto;
+      display: grid;
+      gap: 15px;
+    }
+
+    .task {
+      background: var(--card);
+      padding: 16px;
+      border-radius: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      transition: 0.3s;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.4s forwards;
+    }
+    .task.done { text-decoration: line-through; opacity: 0.6; }
+
+    @keyframes fadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-out { animation: fadeOut 0.4s forwards; }
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+
+    .task span { display: block; font-size: 1rem; }
+    .task small { font-size: 0.8rem; color: gray; }
+
+    .actions button {
+      margin-left: 8px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    .actions button:first-child { background: #2196f3; }
+    .actions button:last-child { background: crimson; }
+
+    .search {
+      padding: 10px;
+      width: 220px;
+      border-radius: 10px;
+      border: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 2000;
+    }
+    .toast {
+      padding: 12px 18px;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateX(100%);
+      animation: slideIn 0.4s forwards, fadeOutToast 0.4s 2.5s forwards;
+    }
+    @keyframes slideIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeOutToast {
+      to { opacity: 0; transform: translateX(100%); }
+    }
+    .toast.success { background: #4caf50; }
+    .toast.error { background: #e53935; }
+    .toast.info { background: #2196f3; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <h1>📝 To-Do List Pro</h1>
+    <button class="dark-toggle">🌙 Dark Mode</button>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="taskInput" placeholder="Tulis tugas...">
+    <select id="category">
+      <option value="Umum">Umum</option>
+      <option value="Kuliah">Kuliah</option>
+      <option value="Kerja">Kerja</option>
+    </select>
+    <input type="date" id="deadline">
+    <button onclick="addTask()">Tambah</button>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="search" class="search" placeholder="🔍 Cari tugas...">
+    <select id="filterCategory">
+      <option value="all">Semua Kategori</option>
+      <option value="Umum">Umum</option>
+      <option value="Kuliah">Kuliah</option>
+      <option value="Kerja">Kerja</option>
+    </select>
+    <select id="filterStatus">
+      <option value="all">Semua Status</option>
+      <option value="done">Selesai</option>
+      <option value="pending">Belum Selesai</option>
+    </select>
+  </div>
+
+  <div class="task-list" id="taskList"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    const taskList = document.getElementById("taskList");
+    const searchInput = document.getElementById("search");
+    const filterCategory = document.getElementById("filterCategory");
+    const filterStatus = document.getElementById("filterStatus");
+    const toastContainer = document.getElementById("toastContainer");
+
+    function saveTasks() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    function showToast(message, type="info") {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function addTask() {
+      const text = document.getElementById("taskInput").value.trim();
+      const category = document.getElementById("category").value;
+      const deadline = document.getElementById("deadline").value;
+
+      if (text === "") return alert("Tugas tidak boleh kosong!");
+      tasks.push({ text, category, deadline, done: false });
+      saveTasks();
+      renderTasks();
+      showToast("Tugas ditambahkan ✅", "success");
+      document.getElementById("taskInput").value = "";
+      document.getElementById("deadline").value = "";
+    }
+
+    function toggleTask(index) {
+      tasks[index].done = !tasks[index].done;
+      saveTasks();
+      renderTasks();
+      showToast(tasks[index].done ? "Tugas selesai 🎉" : "Tugas di-undo ⏳", tasks[index].done ? "success" : "info");
+    }
+
+    function deleteTask(index) {
+      const taskElements = document.querySelectorAll(".task");
+      const taskEl = taskElements[index];
+      taskEl.classList.add("fade-out");
+      taskEl.addEventListener("animationend", () => {
+        tasks.splice(index, 1);
+        saveTasks();
+        renderTasks();
+        showToast("Tugas dihapus ❌", "error");
+      });
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = "";
+      let filtered = tasks.filter(t => {
+        let matchText = t.text.toLowerCase().includes(searchInput.value.toLowerCase());
+        let matchCat = filterCategory.value === "all" || t.category === filterCategory.value;
+        let matchStatus = 
+          filterStatus.value === "all" ||
+          (filterStatus.value === "done" && t.done) ||
+          (filterStatus.value === "pending" && !t.done);
+        return matchText && matchCat && matchStatus;
+      });
+
+      filtered.forEach((task, i) => {
+        const div = document.createElement("div");
+        div.className = "task " + (task.done ? "done" : "");
+        div.innerHTML = `
+          <div>
+            <span>${task.text} <small>[${task.category}]</small></span>
+            <small>Deadline: ${task.deadline || "-"}</small>
+          </div>
+          <div class="actions">
+            <button onclick="toggleTask(${i})">${task.done ? "Undo" : "Selesai"}</button>
+            <button onclick="deleteTask(${i})">Hapus</button>
+          </div>
+        `;
+        taskList.appendChild(div);
+      });
+    }
+
+    // Event listeners
+    searchInput.addEventListener("input", renderTasks);
+    filterCategory.addEventListener("change", renderTasks);
+    filterStatus.addEventListener("change", renderTasks);
+
+    // Dark mode toggle
+    document.querySelector(".dark-toggle").addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>
